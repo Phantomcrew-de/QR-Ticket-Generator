@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+     body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f4;
+        padding: 20px;
+    }
+
+    input, textarea, button {
+        padding: 10px;
+        margin: 10px 0;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+    }
+
+    button {
+        background-color: #333;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    button:hover {
+        background-color: #555;
+    }
+
+    #qrContainer canvas {
+        display: block;
+        margin: 10px 0;
+    }
+
+    a {
+        color: #007BFF;
+        text-decoration: none;
+        margin-right: 10px;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+    
+            table {
+            width: 80%;
+            margin: 50px auto;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        button, input[type="number"], textarea, input[type="file"] {
+            padding: 5px 10px;
+            margin: 5px 0;
+        }
+        
+        #qrContainer {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+            #overlay {
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        background-color: black;
+        display: none;
+        pointer-events: none;  /* Ensure the overlay doesn't interfere with the click event on the image. */
+    }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</head>
+
+<body>
+<table>
+        <tr>
+            <td><embed src="cropped-Phantomcrew-Logo-ohne-Claim.png" type="image/png" width="200"></td>
+            <td><h2>Ticket Erstellen</h2></td>
+                  </tr>
+
+        <tr>
+            <td><label for="idCount">Anzahl der IDs: </label></td>
+            <td><input type="number" id="idCount" value="10"></td>
+        </tr>
+        <tr>
+            <td><label for="idLength">Stellenanzahl jeder ID: </label></td>
+            <td><input type="number" id="idLength" value="6"></td>
+        </tr>
+        <tr>
+            <td colspan="2"><button onclick="generateIDs()">IDs generieren</button></td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <textarea id="inputIds" placeholder="IDs werden hier generiert oder manuell eingefügt" rows="5" style="width:100%"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td><label for="qrSize">Größe des QR-Codes (px): </label></td>
+            <td><input type="number" id="qrSize" value="150"></td>
+        </tr>
+        <tr>
+            <td colspan="2"><button onclick="generateQR()">QR-Codes generieren</button></td>
+        </tr>
+        <tr>
+            <td colspan="2"><button id="downloadAll" style="display: none;" onclick="downloadAllQRs()">Alle QR-Codes herunterladen</button></td>
+        </tr>
+    <tr>
+        <td><label>Ticketvorlage: </label></td>
+        <td><input type="file" id="backgroundImage" accept="image/png" onchange="showImage(this)"></td>
+    </tr>
+    <tr>
+        <td><label>X-Position: </label></td>
+        <td><input type="number" id="xPosition" value="0"></td>
+    </tr>
+    <tr>
+        <td><label>Y-Position: </label></td>
+        <td><input type="number" id="yPosition" value="0"></td>
+    </tr>
+    <tr>
+        <td colspan="2" style="position: relative;">
+            <img id="displayedImage" style="display:none; max-width: 100%;" onclick="setImageCoords(event)" />
+            <div id="overlay"></div>
+        </td>
+    </tr>
+        <tr>
+            <td colspan="2"><button id="combineDownloadBtn" onclick="placeQRonImage()">Tickets erstellen und herunterladen</button></td>
+        </tr>
+        <tr>
+            <td colspan="2"><div id="qrContainer"></div></td>
+        </tr>
+    </table>
+
+    <div class="overlay">
+        <div class="spinner"></div>
+    </div>
+    
+
+    <script>
+     let qrDataURLs = [];
+     
+    function showImage(input) {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const image = document.getElementById('displayedImage');
+                image.src = e.target.result;
+                image.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+
+function setImageCoords(event) {
+    const image = document.getElementById('displayedImage');
+    const rect = image.getBoundingClientRect();
+
+    // Calculate the scale
+    const scaleX = image.width / image.naturalWidth;
+    const scaleY = image.height / image.naturalHeight;
+
+    const x = (event.clientX - rect.left) / scaleX;
+    const y = (event.clientY - rect.top) / scaleY;
+
+    document.getElementById('xPosition').value = Math.round(x);
+    document.getElementById('yPosition').value = Math.round(y);
+
+    // Display the black shape
+    const overlay = document.getElementById('overlay');
+    overlay.style.display = 'block';
+    overlay.style.left = `${x - 75}px`; // 75px to center the overlay
+    overlay.style.top = `${y - 75}px`;  // 75px to center the overlay
+}
+
+    function generateSecureRandomString(length) {
+    	const chars = '012345679abcdeghijlmopqrtuvwy';
+    
+    if (length <= 0) {
+        return '';
+    }
+
+    let result = '';
+    while (result.length < length) {
+        // Generiere eine ausreichende Menge an zufälligen Bytes
+        const byteArray = new Uint8Array(length * 2); // Multiplikation mit 2, um sicherzustellen, dass wir genügend Bytes haben
+        window.crypto.getRandomValues(byteArray);
+
+        for (let i = 0; i < byteArray.length && result.length < length; i++) {
+            const randomIndex = byteArray[i] % chars.length;
+            if (byteArray[i] < (256 - (256 % chars.length))) { // Gleichverteilung sicherstellen
+                result += chars[randomIndex];
+            }
+        }
+    }
+    return result;
+}
+
+
+        function naturalCompare(a, b) {
+            const ax = [], bx = [];
+
+            a.replace(/(\d+)|(\D+)/g, (_, $1, $2) => { ax.push([$1 || Infinity, $2 || ""]); });
+            b.replace(/(\d+)|(\D+)/g, (_, $1, $2) => { bx.push([$1 || Infinity, $2 || ""]); });
+            
+            while(ax.length && bx.length) {
+                let an = ax.shift();
+                let bn = bx.shift();
+                let nn = (an[0] - bn[0]) || an[1].localeCompare(bn[1]);
+                if(nn) return nn;
+            }
+
+            return ax.length - bx.length;
+        }
+
+        function generateIDs() {
+            let count = parseInt(document.getElementById('idCount').value, 10);
+            let length = parseInt(document.getElementById('idLength').value, 10);
+            let ids = new Set();
+
+            while(ids.size < count) {
+                ids.add(generateSecureRandomString(length));
+            }
+            ids = Array.from(ids).sort(naturalCompare);
+
+            document.getElementById('inputIds').value = Array.from(ids).join('\n');
+        }
+
+        function placeQRonImage() {
+            let x = parseInt(document.getElementById('xPosition').value, 10);
+            let y = parseInt(document.getElementById('yPosition').value, 10);
+
+            if (!userImage) {
+                alert("Please select a background image first.");
+                return;
+            }
+
+            combineImages(userImage, qrDataURLs.map(qr => qr.data), x, y, function (combinedImages) {
+                downloadAllCombinedImages(combinedImages);
+            });
+        }
+
+function generateQR() {
+    let size = parseInt(document.getElementById('qrSize').value, 10);
+    let input = document.getElementById('inputIds').value;
+    let ids = input.split('\n');
+    let container = document.getElementById('qrContainer');
+    container.innerHTML = '';
+    qrDataURLs = [];
+
+    ids.forEach(id => {
+        // Create a temporary canvas for the QR code
+        let qrCanvas = document.createElement('canvas');
+        let qr = new QRious({
+            element: qrCanvas,
+            value: id,
+            size: size
+        });
+
+        // Create a larger canvas to hold both the QR code and the text
+        let canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size + 40; // Additional space for the text
+        let ctx = canvas.getContext('2d');
+        
+        // Draw the QR code onto the larger canvas
+        ctx.drawImage(qrCanvas, 0, 0);
+
+        // Draw the ID text under the QR code
+        ctx.font = "20px Monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(id, size / 2, size + 25);
+
+        qrDataURLs.push({
+            data: canvas.toDataURL(),
+            id: id
+        });
+
+        container.appendChild(canvas);
+        container.appendChild(document.createElement('br'));
+    });
+
+    document.getElementById('downloadAll').style.display = 'block';
+}
+
+
+        function downloadAllQRs() {
+            let zip = new JSZip();
+
+            qrDataURLs.forEach(qr => {
+                zip.file(qr.id + ".png", qr.data.split('base64,')[1], {base64: true});
+            });
+
+            let idsTxt = qrDataURLs.map(qr => qr.id).join('\n');
+            zip.file("ids.txt", idsTxt);
+
+            zip.generateAsync({type: "blob"})
+            .then(blob => {
+                saveAs(blob, "qrcodes.zip");
+            });
+        }
+        
+        let userImage;
+        
+        document.getElementById('backgroundImage').addEventListener('change', function(event) {
+            let file = event.target.files[0];
+            let reader = new FileReader();
+
+            reader.onload = function(e) {
+                userImage = new Image();
+                userImage.onload = function() {
+                    // Bild ist geladen und kann später verwendet werden
+                };
+                userImage.src = e.target.result;
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+  function showLoading() {
+    document.querySelector(".overlay").style.display = "flex";
+}
+
+function hideLoading() {
+    document.querySelector(".overlay").style.display = "none";
+}
+
+
+        function combineImages(bgImage, qrCodeDataUrls, x, y, callback) {
+            showLoading(); // Anzeigen der Ladeanimation
+
+            let combinedImages = [];
+            let loadedCount = 0;
+
+            qrCodeDataUrls.forEach((dataUrl, index) => {
+                let canvas = document.createElement('canvas');
+                let ctx = canvas.getContext('2d');
+                let qrImg = new Image();
+
+                qrImg.onload = function() {
+                    canvas.width = bgImage.width;
+                    canvas.height = bgImage.height;
+                    ctx.drawImage(bgImage, 0, 0);
+                    ctx.drawImage(qrImg, x, y);
+
+
+
+                    combinedImages.push(canvas.toDataURL("image/png"));
+                    loadedCount++;
+
+                    if (loadedCount === qrCodeDataUrls.length) {
+                        hideLoading(); // Ausblenden der Ladeanimation
+                        callback(combinedImages);
+                    }
+                }
+
+                qrImg.src = dataUrl;
+            });
+        }
+
+  function downloadAllCombinedImages(combinedImages) {
+    showLoading(); // Anzeigen der Ladeanimation
+
+    let zip = new JSZip();
+    let idsTxt = qrDataURLs.map(qr => qr.id).join('\n');
+    zip.file("ids.txt", idsTxt);
+
+    combinedImages.forEach((dataUrl, index) => {
+        let filename = 'Ticket_' + qrDataURLs[index].id + '.png';
+        zip.file(filename, dataUrl.split('base64,')[1], {base64: true});
+    });
+
+    zip.generateAsync({type: "blob"})
+    .then(blob => {
+        hideLoading(); // Ausblenden der Ladeanimation
+        saveAs(blob, "Tickets_qrcodes.zip");
+    });
+}
+
+
+    </script>
+</body>
+
+</html>
+
