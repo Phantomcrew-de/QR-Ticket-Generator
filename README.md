@@ -21,7 +21,7 @@ A simple, browser-based tool for generating unique QR codes, placing them on a t
 1. **Clone or Download**
 
    ```bash
-   git clone https://github.com/yourusername/qr-ticket-generator.git
+   git clone https://github.com/Phantomcrew-de/QR-Ticket-Generator.git
    ```
 
    Or simply open `Ticketgenerator.html` in your browser.
