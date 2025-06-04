@@ -52,9 +52,9 @@ A simple, browser-based tool for generating unique QR codes, placing them on a t
 
 ```text
 .
-├── Ticketgenerator.html  # Main application
-├── cropped-Phantomcrew-Logo-ohne-Claim.png  # Logo file (optional)
-└── preview.png           # (Add a screenshot for visual reference)
+├── Ticketgenerator.html                       # Main application
+├── cropped-Phantomcrew-Logo-ohne-Claim.png    # Logo file (optional)
+└── preview.png                                # (Add a screenshot for visual reference)
 ```
 
 ---
@@ -73,6 +73,7 @@ A simple, browser-based tool for generating unique QR codes, placing them on a t
 
 MIT License – feel free to use, modify, and share.
 
----
 
-Möchtest du zusätzlich eine **deutsche Version** oder eine **Live-Demo über GitHub Pages**?
+## 🤝 Author
+
+Made with ❤️ by Julius – [phantomcrew.de](https://phantomcrew.de/)
