@@ -69,9 +69,10 @@ A simple, browser-based tool for generating unique QR codes, placing them on a t
 
 ---
 
-### 📄 License
+## 📄 License
 
-MIT License – feel free to use, modify, and share.
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0).  
+You are free to use, modify, and distribute it — as long as you share your changes under the same license.
 
 
 ## 🤝 Author
