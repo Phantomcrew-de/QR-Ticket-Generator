@@ -11,7 +11,7 @@ A simple, browser-based tool for generating unique QR codes, placing them on a t
 * Fully offline capable after loading once
 
 ### 🖼️ Interface Preview
-[Try QR Ticket Generator](https://phantomcrew-de.github.io/QR-Ticket-Generator/Ticketgenerator.html)
+[Try: QR Ticket Generator](https://phantomcrew-de.github.io/QR-Ticket-Generator/Ticketgenerator.html)
 
 ![Preview](preview.png) <!-- Replace with a real screenshot -->
 
